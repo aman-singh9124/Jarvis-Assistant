@@ -13,7 +13,7 @@ engine.setProperty('voice', voices[0].id)
 
 # Speak function
 def speak(text):
-    st.write(f"🟢 Jarvis: {text}")  # Show on Streamlit UI
+    st.write("Jarvis:", text)   # Show text on Streamlit app
     engine.say(text)
     engine.runAndWait()
 
@@ -46,7 +46,6 @@ def get_news():
         for i, article in enumerate(articles, 1):
             title = article['title']
             speak(f"Headline {i}: {title}")
-            st.write(f"{i}. {title}")
 
     except Exception as e:
         speak("Sorry, I could not fetch the news.")
@@ -107,13 +106,13 @@ def processCommand(command):
 
 # Streamlit UI
 def main():
-    st.title("🧑‍💻 Jarvis - Your AI Assistant")
-    st.write("Type a command below and let Jarvis help you!")
+    st.title("🧑‍💻 Jarvis Assistant")
+    st.write("Type a command below and Jarvis will respond:")
 
     command = st.text_input("Enter your command:")
 
     if st.button("Run Command"):
-        if command.strip():
+        if command.strip() != "":
             processCommand(command)
         else:
             st.warning("Please enter a command!")
