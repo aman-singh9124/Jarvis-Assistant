@@ -1,4 +1,5 @@
 import speech_recognition as sr
+import streamlit as st
 import webbrowser
 import pyttsx3
 import musicLibrary
@@ -136,4 +137,5 @@ if __name__ == "__main__":
                 except sr.UnknownValueError:
                     print("Could not recognize the wake word.")
         except Exception as e:
+
             print("Error:", e)
