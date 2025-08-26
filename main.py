@@ -11,11 +11,9 @@ engine.setProperty('rate', 180)
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
 
-recognizer = sr.Recognizer()
-
 # Speak function
 def speak(text):
-    print("Jarvis:", text)
+    st.write(f"🟢 Jarvis: {text}")  # Show on Streamlit UI
     engine.say(text)
     engine.runAndWait()
 
@@ -48,11 +46,11 @@ def get_news():
         for i, article in enumerate(articles, 1):
             title = article['title']
             speak(f"Headline {i}: {title}")
-            print(f"{i}. {title}")
+            st.write(f"{i}. {title}")
 
     except Exception as e:
         speak("Sorry, I could not fetch the news.")
-        print("News error:", e)
+        st.error(f"News error: {e}")
 
 # Command processor
 def processCommand(command):
@@ -102,41 +100,23 @@ def processCommand(command):
 
     elif "exit" in command or "stop" in command:
         speak("Goodbye!")
-        exit()
+        st.stop()
 
     else:
         speak("Sorry, I didn't understand that.")
 
-# Main program loop
+# Streamlit UI
+def main():
+    st.title("🧑‍💻 Jarvis - Your AI Assistant")
+    st.write("Type a command below and let Jarvis help you!")
+
+    command = st.text_input("Enter your command:")
+
+    if st.button("Run Command"):
+        if command.strip():
+            processCommand(command)
+        else:
+            st.warning("Please enter a command!")
+
 if __name__ == "__main__":
-    speak("Initializing Jarvis...")
-
-    while True:
-        try:
-            with sr.Microphone() as source:
-                recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                print("\nSay 'Jarvis' to activate...")
-                audio = recognizer.listen(source, timeout=4, phrase_time_limit=2)
-                try:
-                    wake_word = recognizer.recognize_google(audio)
-                    print("Heard:", wake_word)
-                    if wake_word.lower() == "jarvis":
-                        print("Jarvis activated...")
-                        speak("Yes, how can I help you?")
-
-                        # Listen for actual command
-                        with sr.Microphone() as source2:
-                            recognizer.adjust_for_ambient_noise(source2, duration=0.5)
-                            print("Listening for your command...")
-                            audio2 = recognizer.listen(source2, timeout=4, phrase_time_limit=5)
-                            command = recognizer.recognize_google(audio2)
-                            print("Command received:", command)
-                            processCommand(command)
-
-                except sr.UnknownValueError:
-                    print("Could not recognize the wake word.")
-        except Exception as e:
-
-            print("Error:", e)
-
-
+    main()
