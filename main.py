@@ -1,21 +1,27 @@
 import streamlit as st
 import webbrowser
-import pyttsx3
-import musicLibrary
+from gtts import gTTS
 import datetime
 import requests
+import os
+import tempfile
 
-# Initialize TTS engine
-engine = pyttsx3.init('sapi5')  # use 'espeak' if on Linux
-engine.setProperty('rate', 180)
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[0].id)
+# Optional: Replace this with your own library or dict
+music_library = {
+    "believer": "https://www.youtube.com/watch?v=7wtfhZwyrcc",
+    "faded": "https://www.youtube.com/watch?v=60ItHLz5WEA",
+}
 
-# Speak function
+# Speak using gTTS
 def speak(text):
-    st.write("Jarvis:", text)   # Show text on Streamlit app
-    engine.say(text)
-    engine.runAndWait()
+    st.write("Jarvis:", text)
+    try:
+        tts = gTTS(text)
+        temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+        tts.save(temp_audio.name)
+        st.audio(temp_audio.name, format="audio/mp3")
+    except Exception as e:
+        st.error(f"🔈 TTS Error: {e}")
 
 # Time
 def tell_time():
@@ -80,8 +86,8 @@ def processCommand(command):
         webbrowser.open("https://web.whatsapp.com")
 
     elif "play" in command:
-        song = command.replace("play", "").strip()
-        link = musicLibrary.music.get(song)
+        song = command.replace("play", "").strip().lower()
+        link = music_library.get(song)
         if link:
             speak(f"Playing {song}")
             webbrowser.open(link)
