@@ -1,27 +1,21 @@
 import streamlit as st
 import webbrowser
-from gtts import gTTS
+import pyttsx3
+import musicLibrary
 import datetime
 import requests
-import os
-import tempfile
 
-# Optional: Replace this with your own library or dict
-music_library = {
-    "believer": "https://www.youtube.com/watch?v=7wtfhZwyrcc",
-    "faded": "https://www.youtube.com/watch?v=60ItHLz5WEA",
-}
+# Initialize TTS engine
+engine = pyttsx3.init()
+engine.setProperty('rate', 180)
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
 
-# Speak using gTTS
+# Speak function
 def speak(text):
-    st.write("Jarvis:", text)
-    try:
-        tts = gTTS(text)
-        temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-        tts.save(temp_audio.name)
-        st.audio(temp_audio.name, format="audio/mp3")
-    except Exception as e:
-        st.error(f"🔈 TTS Error: {e}")
+    st.write(f"**Jarvis:** {text}")
+    engine.say(text)
+    engine.runAndWait()
 
 # Time
 def tell_time():
@@ -86,8 +80,8 @@ def processCommand(command):
         webbrowser.open("https://web.whatsapp.com")
 
     elif "play" in command:
-        song = command.replace("play", "").strip().lower()
-        link = music_library.get(song)
+        song = command.replace("play", "").strip()
+        link = musicLibrary.music.get(song)
         if link:
             speak(f"Playing {song}")
             webbrowser.open(link)
@@ -111,17 +105,8 @@ def processCommand(command):
         speak("Sorry, I didn't understand that.")
 
 # Streamlit UI
-def main():
-    st.title("🧑‍💻 Jarvis Assistant")
-    st.write("Type a command below and Jarvis will respond:")
+st.title("🧠 Jarvis - Virtual Assistant")
+command_input = st.text_input("Type your command:")
 
-    command = st.text_input("Enter your command:")
-
-    if st.button("Run Command"):
-        if command.strip() != "":
-            processCommand(command)
-        else:
-            st.warning("Please enter a command!")
-
-if __name__ == "__main__":
-    main()
+if st.button("Execute") and command_input:
+    processCommand(command_input)
