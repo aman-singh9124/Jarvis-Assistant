@@ -2,4 +2,5 @@ streamlit
 pyttsx3
 requests
 gTTS
+SpeechRecognition
 
