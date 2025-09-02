@@ -1,44 +1,36 @@
+import speech_recognition as sr
 import streamlit as st
-from gtts import gTTS
 import webbrowser
+import pyttsx3
+import musicLibrary
 import datetime
 import requests
-import os
-import uuid
 
-# Optional: Your custom music library
-try:
-    import musicLibrary
-except ImportError:
-    musicLibrary = {"music": {"song1": "https://example.com"}}
+# Initialize TTS engine
+engine = pyttsx3.init('sapi5')  # use 'espeak' if on Linux
+engine.setProperty('rate', 180)
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
 
-# Speak function using gTTS
+recognizer = sr.Recognizer()
+
+# Speak function
 def speak(text):
-    st.write(f"**Jarvis:** {text}")
-    try:
-        tts = gTTS(text=text, lang='en')
-        filename = f"temp_{uuid.uuid4()}.mp3"
-        tts.save(filename)
+    print("Jarvis:", text)
+    engine.say(text)
+    engine.runAndWait()
 
-        # Works only locally
-        if os.name == 'nt':  # Windows
-            os.system(f"start {filename}")
-        else:  # Linux/macOS
-            os.system(f"mpg123 {filename}")
-    except Exception as e:
-        st.error(f"Speech failed: {e}")
-
-# Show current time
+# Time
 def tell_time():
     current_time = datetime.datetime.now().strftime("%I:%M %p")
     speak(f"The current time is {current_time}")
 
-# Show current date
+# Date
 def tell_date():
     today = datetime.date.today().strftime("%B %d, %Y")
     speak(f"Today's date is {today}")
 
-# Get latest news
+# News
 def get_news():
     api_key = "236aa3dc04964442874b296964d7ada3"
     country = "in"
@@ -47,7 +39,7 @@ def get_news():
     try:
         response = requests.get(url)
         data = response.json()
-        articles = data.get("articles", [])[:5]
+        articles = data["articles"][:5]
 
         if not articles:
             speak("Sorry, I couldn't find any news right now.")
@@ -57,12 +49,13 @@ def get_news():
         for i, article in enumerate(articles, 1):
             title = article['title']
             speak(f"Headline {i}: {title}")
+            print(f"{i}. {title}")
 
     except Exception as e:
         speak("Sorry, I could not fetch the news.")
-        st.error(f"News error: {e}")
+        print("News error:", e)
 
-# Command handler
+# Command processor
 def processCommand(command):
     command = command.lower()
 
@@ -92,7 +85,7 @@ def processCommand(command):
 
     elif "play" in command:
         song = command.replace("play", "").strip()
-        link = musicLibrary.get("music", {}).get(song)
+        link = musicLibrary.music.get(song)
         if link:
             speak(f"Playing {song}")
             webbrowser.open(link)
@@ -110,14 +103,39 @@ def processCommand(command):
 
     elif "exit" in command or "stop" in command:
         speak("Goodbye!")
-        st.stop()
+        exit()
 
     else:
         speak("Sorry, I didn't understand that.")
 
-# Streamlit App
-st.title("🧠 Jarvis - Your Virtual Assistant")
-command_input = st.text_input("Type your command below:")
+# Main program loop
+if __name__ == "__main__":
+    speak("Initializing Jarvis...")
 
-if st.button("Execute") and command_input:
-    processCommand(command_input)
+    while True:
+        try:
+            with sr.Microphone() as source:
+                recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                print("\nSay 'Jarvis' to activate...")
+                audio = recognizer.listen(source, timeout=4, phrase_time_limit=2)
+                try:
+                    wake_word = recognizer.recognize_google(audio)
+                    print("Heard:", wake_word)
+                    if wake_word.lower() == "jarvis":
+                        print("Jarvis activated...")
+                        speak("Yes, how can I help you?")
+
+                        # Listen for actual command
+                        with sr.Microphone() as source2:
+                            recognizer.adjust_for_ambient_noise(source2, duration=0.5)
+                            print("Listening for your command...")
+                            audio2 = recognizer.listen(source2, timeout=4, phrase_time_limit=5)
+                            command = recognizer.recognize_google(audio2)
+                            print("Command received:", command)
+                            processCommand(command)
+
+                except sr.UnknownValueError:
+                    print("Could not recognize the wake word.")
+        except Exception as e:
+             print("Error:", e)
+            print("Error:", e)
